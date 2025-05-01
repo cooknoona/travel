@@ -1,18 +1,19 @@
 package com.travel.entity;
 
 import com.travel.constant.Authority;
+import com.travel.constant.Level;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.time.LocalDate;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user")
-@Getter @Setter @ToString
+@Getter @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,6 +41,9 @@ public class User {
     /** When you join the programme */
     @Column(nullable = false, updatable = false)
     private LocalDateTime registeredAt;
+
+    @Enumerated(EnumType.STRING)
+    private Level level;
 
     @Enumerated(EnumType.STRING)
     private Authority authority;
