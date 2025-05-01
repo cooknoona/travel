@@ -1,4 +1,4 @@
-package com.travel.constant;
+package com.travel.constant.user;
 
 public enum Province {
     GYEONGGIDO,

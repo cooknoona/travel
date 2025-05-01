@@ -1,16 +1,17 @@
 package com.travel.entity;
 
-import com.travel.constant.Authority;
-import com.travel.constant.Level;
+import com.travel.constant.user.Authority;
+import com.travel.constant.user.Gender;
+import com.travel.constant.user.Level;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 import java.time.LocalDateTime;
 
 @Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "user")
 @Getter @Setter
 @NoArgsConstructor
@@ -23,11 +24,20 @@ public class User {
     @Column(nullable = false, unique = true, length = 20)
     private String userId;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false, unique = false, length = 20)
-    private String name;
+    @Column(nullable = false, length = 20)
+    private String firstName;
+
+    @Column(length = 20)
+    private String middleName;
+
+    @Column(nullable = false, length = 20)
+    private String lastName;
+
+    @Column(nullable = false, length = 20)
+    private String nickName;
 
     @Column(nullable = false, unique = true, length = 50)
     private String email;
@@ -35,15 +45,14 @@ public class User {
     @Column(nullable = false, unique = true, length = 50)
     private String phone;
 
-    @Column(nullable = false, length = 200)
-    private String address;
+    private String profileImgUrl;
+    private String feed;
 
-    /** When you join the programme */
     @Column(nullable = false, updatable = false)
     private LocalDateTime registeredAt;
 
     @Enumerated(EnumType.STRING)
-    private Level level;
+    private Gender gender;
 
     @Enumerated(EnumType.STRING)
     private Authority authority;
