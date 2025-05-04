@@ -1,14 +1,15 @@
 package com.travel.entity;
 
-import com.travel.constant.user.Authority;
-import com.travel.constant.user.Gender;
-import com.travel.constant.user.Level;
+import com.travel.constant.Authority;
+import com.travel.constant.Gender;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -39,6 +40,9 @@ public class User {
     @Column(nullable = false, length = 20)
     private String nickName;
 
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime birthDate;
+
     @Column(nullable = false, unique = true, length = 50)
     private String email;
 
@@ -56,4 +60,7 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private Authority authority;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<GuideFeedback> guideFeedbacks = new ArrayList<>();
 }

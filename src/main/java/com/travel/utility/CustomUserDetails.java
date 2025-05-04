@@ -8,15 +8,15 @@ import java.util.Collection;
 /** Record class for authenticate object from CustomUserDetailsService */
 public record CustomUserDetails(
         Long id,
-        String employeeCode,
-        String name,
+        String userId,
+        String firstName,
         String password,
         Collection<? extends GrantedAuthority> authorities
 ) implements UserDetails {
 
     @Override
     public String getUsername() {
-        return employeeCode;
+        return firstName;
     }
 
     @Override

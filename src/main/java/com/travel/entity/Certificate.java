@@ -22,4 +22,8 @@ public class Certificate {
 
     @Column(nullable = false)
     private LocalDateTime issuedDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id")
+    private Guide tourGuide;
 }

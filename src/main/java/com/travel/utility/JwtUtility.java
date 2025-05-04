@@ -54,7 +54,7 @@ public class JwtUtility {
 
         String accessToken = Jwts.builder()
                 .subject(String.valueOf(customUserDetails.id()))
-                .claim("name", customUserDetails.name())
+                .claim("name", customUserDetails.firstName())
                 .claim("authorities", customUserDetails.authorities())
                 .issuedAt(accessTokenExpiresIn)
                 .signWith(key)
@@ -62,7 +62,7 @@ public class JwtUtility {
 
         String refreshToken = Jwts.builder()
                 .subject(String.valueOf(customUserDetails.id()))
-                .claim("name", customUserDetails.name())
+                .claim("name", customUserDetails.firstName())
                 .claim("authorities", customUserDetails.authorities())
                 .issuedAt(refreshTokenExpiresIn)
                 .signWith(key)
@@ -105,7 +105,7 @@ public class JwtUtility {
         CustomUserDetails customUserDetails = new CustomUserDetails(
                 user.getId(),
                 user.getUserId(),
-                user.getName(),
+                user.getFirstName(),
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getAuthority().toString()))
         );
