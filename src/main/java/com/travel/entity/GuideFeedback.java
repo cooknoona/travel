@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/** Entity to comment on a guide reputation */
 @Entity
 @Table(name = "guide_feedback")
 @Getter @Setter

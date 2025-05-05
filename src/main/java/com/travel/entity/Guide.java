@@ -15,16 +15,11 @@ import java.util.List;
 @Getter @Setter
 @NoArgsConstructor
 public class Guide extends User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="id")
-    private Long id;
-
     @Enumerated(EnumType.STRING)
     private Level level;
 
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
-    private List<GuidePost> guidePosts = new ArrayList<>();
+    private List<GuideTour> guideTours = new ArrayList<>();
 
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
     private List<GuideFeedback> guideFeedbacks = new ArrayList<>();

@@ -1,6 +1,7 @@
 package com.travel.entity;
 
-import com.travel.constant.Status;
+import com.travel.constant.Decision;
+import com.travel.constant.RequestStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,11 +19,16 @@ public class FriendRequest {
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "requester_id")
     private User requester;
 
     @ManyToOne
+    @JoinColumn(name = "receiver_id")
     private User receiver;
 
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private RequestStatus requestStatus;
+
+    @Enumerated(EnumType.STRING)
+    private Decision decision;
 }

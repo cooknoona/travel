@@ -20,7 +20,7 @@ public class Certificate {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(name = "issued_date", nullable = false)
     private LocalDateTime issuedDate;
 
     @ManyToOne(fetch = FetchType.LAZY)

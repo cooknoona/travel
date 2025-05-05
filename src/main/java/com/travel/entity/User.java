@@ -2,6 +2,7 @@ package com.travel.entity;
 
 import com.travel.constant.Authority;
 import com.travel.constant.Gender;
+import com.travel.constant.Language;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,8 +10,11 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+/** User entity to have a set of basic information of users */
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "user")
@@ -61,6 +65,24 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Authority authority;
 
+    @ElementCollection(targetClass = Language.class)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "user_languages", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "language")
+    private Set<Language> languages = new HashSet<>();
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<GuideFeedback> guideFeedbacks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "requester", cascade = CascadeType.REMOVE)
+    private List<FriendRequest> friendRequesters = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.REMOVE)
+    private List<FriendRequest> friendReceivers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "requester", cascade = CascadeType.REMOVE)
+    private List<Friend> friendInitiators = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.REMOVE)
+    private List<Friend> friendAcceptors = new ArrayList<>();
 }
