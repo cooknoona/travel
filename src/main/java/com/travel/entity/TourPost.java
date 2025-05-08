@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Table(name = "guide_tour")
 @Getter @Setter
 @NoArgsConstructor
-public class GuideTour {
+public class TourPost {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")

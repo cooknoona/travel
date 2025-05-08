@@ -1,6 +1,5 @@
 package com.travel.entity;
 
-import com.travel.constant.Decision;
 import com.travel.constant.RequestStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -28,7 +27,4 @@ public class FriendRequest {
 
     @Enumerated(EnumType.STRING)
     private RequestStatus requestStatus;
-
-    @Enumerated(EnumType.STRING)
-    private Decision decision;
 }

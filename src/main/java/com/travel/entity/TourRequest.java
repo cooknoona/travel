@@ -1,6 +1,5 @@
 package com.travel.entity;
 
-import com.travel.constant.Decision;
 import com.travel.constant.RequestStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -25,17 +24,14 @@ public class TourRequest {
     @Column(name = "requested_at", nullable = false, updatable = false)
     private LocalDateTime requestedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "requester_id")
-    private User requester;
-
-    @ManyToOne
-    @JoinColumn(name = "receiver_id")
-    private Guide receiver;
-
     @Enumerated(EnumType.STRING)
     private RequestStatus requestStatus;
 
-    @Enumerated(EnumType.STRING)
-    private Decision decision;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "guide_id")
+    private Guide guide;
 }

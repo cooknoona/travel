@@ -1,5 +1,6 @@
 package com.travel.entity;
 
+import com.travel.constant.GuideStatus;
 import com.travel.constant.Level;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -18,8 +19,17 @@ public class Guide extends User {
     @Enumerated(EnumType.STRING)
     private Level level;
 
+    @Enumerated(EnumType.STRING)
+    private GuideStatus guideStatus;
+
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
-    private List<GuideTour> guideTours = new ArrayList<>();
+    private List<TourPost> tourPosts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
+    private List<TourRequest> tourRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
+    private List<TourReservation> tourReservations = new ArrayList<>();
 
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
     private List<GuideFeedback> guideFeedbacks = new ArrayList<>();

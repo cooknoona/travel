@@ -5,13 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
+/** Tour community,  */
 @Entity
-@Table(name = "certificate")
+@Table(name = "travel_community")
 @Getter @Setter
 @NoArgsConstructor
-public class Certificate {
+public class TravelExperience {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="id")
@@ -21,12 +20,5 @@ public class Certificate {
     private String title;
 
     @Column(nullable = false)
-    private String imgUrl;
-
-    @Column(name = "issued_date", nullable = false)
-    private LocalDateTime issuedDate;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
-    private Guide guide;
+    private String content;
 }

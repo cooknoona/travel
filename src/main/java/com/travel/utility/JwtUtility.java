@@ -3,6 +3,8 @@ package com.travel.utility;
 import com.travel.config.JwtConfig;
 import com.travel.dto.response.TokenResponse;
 import com.travel.entity.User;
+import com.travel.exception.client.ResourceNotFoundException;
+import com.travel.exception.client.UnauthenticatedException;
 import com.travel.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -47,7 +49,7 @@ public class JwtUtility {
     /** To generate access token and refresh token
      * And AccessToken, RefreshToken compacting */
     private TokenResponse generateToken(CustomUserDetails customUserDetails, HttpServletResponse httpServletResponse) {
-        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());   // Used by SHA-256
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
         long now = (new Date()).getTime();
         Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRATION);
         Date refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRATION);
@@ -96,7 +98,7 @@ public class JwtUtility {
 
         String primaryKey = claims.getSubject();
         User user = userRepository.findById(Long.valueOf(primaryKey))
-                .orElseThrow(() -> new UsernameNotFoundException("User not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("User PK not found!"));
         Collection<? extends GrantedAuthority> authorities = Arrays.stream(
                         claims.get("authorities").toString().split(","))
                 .map(SimpleGrantedAuthority::new)
@@ -119,7 +121,7 @@ public class JwtUtility {
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             log.error("JWT Validation Failed!");
-            return false;
+            throw new UnauthenticatedException("Invalid Token");
         }
     }
 }

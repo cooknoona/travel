@@ -4,6 +4,8 @@ package com.travel.constant;
  *  When the guide decide a request from a user on a guide tour post,
  *  It'll turn into close. */
 public enum PostStatus {
-    OPEN,
-    CLOSE
+    ACTIVE,
+    RESERVED,
+    DELETED,
+    BLOCKED,
 }

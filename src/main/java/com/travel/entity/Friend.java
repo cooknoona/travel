@@ -10,8 +10,7 @@ import java.time.LocalDateTime;
 /** Entity for friend, when the receiver accepted a ticket from a requester */
 @Entity
 @Table(name = "friend")
-@Getter
-@Setter
+@Getter @Setter
 @NoArgsConstructor
 public class Friend {
     @Id

@@ -3,10 +3,9 @@ package com.travel.entity;
 import com.travel.constant.Authority;
 import com.travel.constant.Gender;
 import com.travel.constant.Language;
+import com.travel.constant.UserRole;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,6 +19,8 @@ import java.util.Set;
 @Table(name = "user")
 @Getter @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,6 +45,9 @@ public class User {
     @Column(nullable = false, length = 20)
     private String nickName;
 
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime birthDate;
 
@@ -53,14 +57,14 @@ public class User {
     @Column(nullable = false, unique = true, length = 50)
     private String phone;
 
-    private String profileImgUrl;
+    private String imgUrl;
     private String feed;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime registeredAt;
 
     @Enumerated(EnumType.STRING)
-    private Gender gender;
+    private UserRole userRole;
 
     @Enumerated(EnumType.STRING)
     private Authority authority;
@@ -70,6 +74,12 @@ public class User {
     @CollectionTable(name = "user_languages", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "language")
     private Set<Language> languages = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<TourRequest> tourRequests = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
+    private List<TourReservation> tourReservations = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<GuideFeedback> guideFeedbacks = new ArrayList<>();
