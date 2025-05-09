@@ -1,4 +1,4 @@
 package com.travel.dto.response;
 
-public class UserResponse {
+public record UserResponse() {
 }

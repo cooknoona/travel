@@ -1,14 +1,5 @@
 package com.travel.dto.response;
 
-import lombok.*;
+public record TokenResponse(String grantType, String accessToken, String refreshToken) {
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class TokenResponse {
-    private String grantType;
-    private String accessToken;
-    private String refreshToken;
 }

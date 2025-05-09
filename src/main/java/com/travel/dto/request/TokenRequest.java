@@ -1,4 +1,4 @@
 package com.travel.dto.request;
 
-public class TokenRequest {
+public record TokenRequest() {
 }
