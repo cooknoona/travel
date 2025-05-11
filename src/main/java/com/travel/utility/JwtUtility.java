@@ -1,6 +1,7 @@
 package com.travel.utility;
 
 import com.travel.config.JwtConfig;
+import com.travel.dto.response.LoginResponse;
 import com.travel.dto.response.TokenResponse;
 import com.travel.entity.User;
 import com.travel.exception.client.ResourceNotFoundException;
@@ -9,13 +10,15 @@ import com.travel.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import io.jsonwebtoken.security.Keys;
 
@@ -29,60 +32,69 @@ import java.util.Date;
 @Component
 public class JwtUtility {
     private final String secretKey;
-    private static final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 60; // 1 Day
-    private static final long REFRESH_TOKEN_EXPIRATION = 60 * 60 * 1000 * 24 * 7;   // 7 Days
+    private static final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 60; // 1Hour
+    private static final long REFRESH_TOKEN_EXPIRATION = 1000 * 60 * 60 * 24 * 7; // 7Days
+
     private final UserRepository userRepository;
 
-    /** Create constructor parameter to inject dependency
-     * So @RequiredArgsConstructor can't call constructor with parameter fields */
     public JwtUtility(JwtConfig jwtConfig, UserRepository userRepository) {
         this.secretKey = jwtConfig.getSecretKey();
         this.userRepository = userRepository;
     }
 
-    /** To get the Object of authenticated user via CustomUserDetails */
-    public TokenResponse getPrincipal(Authentication authentication, HttpServletResponse httpServletResponse) {
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-        return generateToken(customUserDetails, httpServletResponse);
-    }
-
-    /** To generate access token and refresh token
-     * And AccessToken, RefreshToken compacting */
-    private TokenResponse generateToken(CustomUserDetails customUserDetails, HttpServletResponse httpServletResponse) {
+    public LoginResponse generateLoginTokens(CustomUserDetails userDetails, HttpServletResponse response) {
         SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
-        long now = (new Date()).getTime();
-        Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRATION);
-        Date refreshTokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRATION);
+        long now = System.currentTimeMillis();
 
         String accessToken = Jwts.builder()
-                .subject(String.valueOf(customUserDetails.id()))
-                .claim("name", customUserDetails.firstName())
-                .claim("authorities", customUserDetails.authorities())
-                .issuedAt(accessTokenExpiresIn)
+                .subject(String.valueOf(userDetails.id()))
+                .claim("name", userDetails.firstName())
+                .claim("authorities", userDetails.authorities())
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + ACCESS_TOKEN_EXPIRATION))
                 .signWith(key)
                 .compact();
 
         String refreshToken = Jwts.builder()
-                .subject(String.valueOf(customUserDetails.id()))
-                .claim("name", customUserDetails.firstName())
-                .claim("authorities", customUserDetails.authorities())
-                .issuedAt(refreshTokenExpiresIn)
+                .subject(String.valueOf(userDetails.id()))
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + REFRESH_TOKEN_EXPIRATION))
                 .signWith(key)
                 .compact();
 
-        return TokenResponse.builder()
-                .grantType("Bearer")
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+        addRefreshTokenToCookie(response, refreshToken);
+
+        return LoginResponse.ofPairedTokens(accessToken, refreshToken);
     }
 
-    /** Re-Issue access token */
-    public String reIssueAccessToken(Authentication authentication, HttpServletResponse httpServletResponse) {
-        return getPrincipal(authentication, httpServletResponse).getAccessToken();
+    public TokenResponse reIssueAccessToken(String refreshToken) {
+        Claims claims = parseToken(refreshToken);
+        String userId = claims.getSubject();
+
+        User user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        CustomUserDetails userDetails = new CustomUserDetails(
+                user.getId(), user.getUserId(), user.getFirstName(),
+                user.getPassword(),
+                Collections.singleton(new SimpleGrantedAuthority(user.getAuthority().toString()))
+        );
+
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        long now = System.currentTimeMillis();
+
+        String newAccessToken = Jwts.builder()
+                .subject(String.valueOf(user.getId()))
+                .claim("name", user.getFirstName())
+                .claim("authorities", userDetails.authorities())
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + ACCESS_TOKEN_EXPIRATION))
+                .signWith(key)
+                .compact();
+
+        return TokenResponse.ofAccessToken(newAccessToken);
     }
 
-    /** Parsing token before authentication */
     public Claims parseToken(String token) {
         SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
         return Jwts.parser()
@@ -92,36 +104,54 @@ public class JwtUtility {
                 .getPayload();
     }
 
-    /** To create authenticate object to compare */
     public Authentication getAuthentication(String token) {
         Claims claims = parseToken(token);
+        String userId = claims.getSubject();
 
-        String primaryKey = claims.getSubject();
-        User user = userRepository.findById(Long.valueOf(primaryKey))
-                .orElseThrow(() -> new ResourceNotFoundException("User PK not found!"));
+        User user = userRepository.findById(Long.valueOf(userId))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         Collection<? extends GrantedAuthority> authorities = Arrays.stream(
                         claims.get("authorities").toString().split(","))
                 .map(SimpleGrantedAuthority::new)
                 .toList();
 
-        CustomUserDetails customUserDetails = new CustomUserDetails(
-                user.getId(),
-                user.getUserId(),
-                user.getFirstName(),
-                user.getPassword(),
-                Collections.singleton(new SimpleGrantedAuthority(user.getAuthority().toString()))
+        CustomUserDetails userDetails = new CustomUserDetails(
+                user.getId(), user.getUserId(), user.getFirstName(), user.getPassword(), authorities
         );
-        return new UsernamePasswordAuthenticationToken(customUserDetails, token, authorities);
+        return new UsernamePasswordAuthenticationToken(userDetails, token, authorities);
     }
 
-    public boolean TokenValidation(String token) {
+    public boolean validateToken(String token) {
         try {
             parseToken(token);
-            log.info("JWT Validated Successfully!");
             return true;
         } catch (JwtException | IllegalArgumentException e) {
-            log.error("JWT Validation Failed!");
-            throw new UnauthenticatedException("Invalid Token");
+            throw new UnauthenticatedException("Invalid JWT token");
         }
     }
+
+    private void addRefreshTokenToCookie(HttpServletResponse response, String refreshToken) {
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(REFRESH_TOKEN_EXPIRATION / 1000)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    public void clearRefreshTokenCookie(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/")
+                .maxAge(0)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
 }
+
+

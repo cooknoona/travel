@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
-public record LogInRequest(
+public record LoginRequest(
         @NotBlank(message = "ID is required")
         @Size(min = 4, max = 20, message = "ID length must be between 4 - 20")
         @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "ID must include letters, numbers, and underscores only")
