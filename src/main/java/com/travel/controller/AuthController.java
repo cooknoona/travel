@@ -7,17 +7,22 @@ import com.travel.dto.response.LoginResponse;
 import com.travel.dto.response.TokenResponse;
 import com.travel.exception.client.UnauthenticatedException;
 import com.travel.service.AuthService;
+import com.travel.utility.CustomUserDetails;
+import com.travel.utility.JwtUtility;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    AuthService authService;
+    private final AuthService authService;
+    private final JwtUtility jwtUtility;
 
     @PostMapping("/signup")
     public ResponseEntity<Boolean> signup(@RequestBody @Valid SignUpRequest signUpRequest) {
@@ -25,23 +30,27 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-        LoginResponse tokens = authService.login(loginRequest, response);
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        LoginResponse tokens = authService.login(request, response);
         return ResponseEntity.ok(tokens);
     }
 
-    @PostMapping("/token/reissue")
-    public ResponseEntity<TokenResponse> reIssueAccessToken(
-            @CookieValue(value = "refresh_token", required = false) String refreshToken) {
-        if (refreshToken == null) {
-            throw new UnauthenticatedException("Refresh token is missing");
-        }
-        return ResponseEntity.ok(authService.reIssueAccessToken(refreshToken));
+    @PostMapping("/reissue")
+    public ResponseEntity<TokenResponse> reissue(@CookieValue("refresh_token") String refreshToken) {
+        TokenResponse newAccessToken = authService.reissue(refreshToken);
+        return ResponseEntity.ok(newAccessToken);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
-        authService.logout(response);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new UnauthenticatedException("Invalid authentication context");
+        }
+
+        String accessToken = jwtUtility.generateAccessToken(userDetails);
+        authService.logout(accessToken, response);
+
         return ResponseEntity.noContent().build();
     }
 }

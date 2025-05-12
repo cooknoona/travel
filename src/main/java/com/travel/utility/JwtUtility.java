@@ -10,7 +10,6 @@ import com.travel.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +22,7 @@ import org.springframework.stereotype.Component;
 import io.jsonwebtoken.security.Keys;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,11 +42,11 @@ public class JwtUtility {
         this.userRepository = userRepository;
     }
 
-    public LoginResponse generateLoginTokens(CustomUserDetails userDetails, HttpServletResponse response) {
+    public String generateAccessToken(CustomUserDetails userDetails) {
         SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
         long now = System.currentTimeMillis();
 
-        String accessToken = Jwts.builder()
+        return Jwts.builder()
                 .subject(String.valueOf(userDetails.id()))
                 .claim("name", userDetails.firstName())
                 .claim("authorities", userDetails.authorities())
@@ -54,6 +54,11 @@ public class JwtUtility {
                 .expiration(new Date(now + ACCESS_TOKEN_EXPIRATION))
                 .signWith(key)
                 .compact();
+    }
+
+    public String addRefreshTokenToCookieAndReturn(CustomUserDetails userDetails, HttpServletResponse response) {
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        long now = System.currentTimeMillis();
 
         String refreshToken = Jwts.builder()
                 .subject(String.valueOf(userDetails.id()))
@@ -63,8 +68,7 @@ public class JwtUtility {
                 .compact();
 
         addRefreshTokenToCookie(response, refreshToken);
-
-        return LoginResponse.ofPairedTokens(accessToken, refreshToken);
+        return refreshToken;
     }
 
     public TokenResponse reIssueAccessToken(String refreshToken) {
@@ -152,6 +156,15 @@ public class JwtUtility {
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
+
+    public long getRemainingExpiration(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+        Claims claims = Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.getExpiration().getTime() - System.currentTimeMillis();
+    }
 }
-
-

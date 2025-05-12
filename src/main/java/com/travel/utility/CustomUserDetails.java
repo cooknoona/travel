@@ -9,14 +9,14 @@ import java.util.Collection;
 public record CustomUserDetails(
         Long id,
         String userId,
-        String firstName,
+        String nickname,
         String password,
         Collection<? extends GrantedAuthority> authorities
 ) implements UserDetails {
 
     @Override
     public String getUsername() {
-        return firstName;
+        return nickname;
     }
 
     @Override

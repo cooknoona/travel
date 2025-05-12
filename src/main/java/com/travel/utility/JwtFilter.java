@@ -2,6 +2,8 @@ package com.travel.utility;
 
 
 import com.travel.exception.client.BadRequestException;
+import com.travel.exception.client.UnauthenticatedException;
+import com.travel.service.TokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,36 +22,44 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtility jwtUtility;
+    private final TokenService tokenService;
+
     @Override
-    protected void doFilterInternal(@Nullable HttpServletRequest httpServletRequest,
-                                    @Nullable HttpServletResponse httpServletResponse,
-                                    @Nullable FilterChain filterChain)
-            throws ServletException, IOException {
-        if (httpServletRequest == null) {
-            log.error("HttpServletRequest cannot be null!");
-            throw new BadRequestException("HttpServletRequest cannot be null!");
+    protected void doFilterInternal(@Nullable HttpServletRequest request,
+                                    @Nullable HttpServletResponse response,
+                                    @Nullable FilterChain filterChain) throws ServletException, IOException {
+        if (request == null || response == null || filterChain == null) {
+            throw new BadRequestException("Request, Response, or FilterChain is null");
         }
-        if (httpServletResponse == null) {
-            log.error("HttpServletResponse cannot be null!");
-            throw new BadRequestException("HttpServletResponse cannot be null!");
+
+        try {
+            String token = resolveToken(request);
+            if (StringUtils.hasText(token)) {
+                validateAndAuthenticateToken(token);
+            }
+            filterChain.doFilter(request, response);
+        } catch (UnauthenticatedException e) {
+            log.error("JWT validation failed: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
-        if (filterChain == null) {
-            log.error("FilterChain cannot be null!");
-            throw new BadRequestException("FilterChain cannot be null!");
-        }
-        String jwt = resolveToken(httpServletRequest);
-        if (StringUtils.hasText(jwt) && jwtUtility.TokenValidation(jwt)) {
-            Authentication authentication = jwtUtility.getAuthentication(jwt);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
-        filterChain.doFilter(httpServletRequest, httpServletResponse);
     }
 
-    /** Extract Token from Authorization header */
+    private void validateAndAuthenticateToken(String token) {
+        if (jwtUtility.validateToken(token)) {
+            if (tokenService.isBlacklisted(token)) {
+                throw new UnauthenticatedException("Access token is blacklisted");
+            }
+            Authentication authentication = jwtUtility.getAuthentication(token);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        } else {
+            throw new UnauthenticatedException("Invalid JWT token");
+        }
+    }
+
     private String resolveToken(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        String bearer = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
         }
         return null;
     }

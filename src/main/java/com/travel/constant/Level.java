@@ -8,5 +8,5 @@ public enum Level {
     DIAMOND,
     MASTER,
     KING,
-    GOD,
+    GOD
 }

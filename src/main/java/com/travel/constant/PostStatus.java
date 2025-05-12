@@ -7,5 +7,5 @@ public enum PostStatus {
     ACTIVE,
     RESERVED,
     DELETED,
-    BLOCKED,
+    BLOCKED
 }

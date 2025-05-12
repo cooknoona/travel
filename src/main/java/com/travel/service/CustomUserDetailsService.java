@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 
+/** For Session managing, Will probably used later when login logics passing by foam style login architecture */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -20,13 +21,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String employeeCode) throws UsernameNotFoundException {
-        User user = userRepository.findByUserId(employeeCode)
-                .orElseThrow(() -> new UsernameNotFoundException("Employee code not found"));
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UsernameNotFoundException("userId not found"));
         return new CustomUserDetails(
                 user.getId(),
                 user.getUserId(),
-                user.getFirstName(),
+                user.getNickName(),
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getAuthority().toString()))
         );

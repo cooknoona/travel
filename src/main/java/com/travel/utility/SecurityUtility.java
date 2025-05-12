@@ -3,7 +3,6 @@ package com.travel.utility;
 import com.travel.exception.client.ForbiddenException;
 import com.travel.exception.client.UnauthenticatedException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;

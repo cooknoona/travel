@@ -13,7 +13,6 @@ public class SwaggerConfig implements WebMvcConfigurer {
     @Bean
     public OpenAPI customOpenAPI(){
 
-        // SecurityScheme definition
         SecurityScheme securityScheme = new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP) // HTTP type
                 .scheme("bearer") // Authentication type : bearer
@@ -21,9 +20,6 @@ public class SwaggerConfig implements WebMvcConfigurer {
                 .name("Authorization") // HTTP header name
                 .in(SecurityScheme.In.HEADER); // Extract token from header
 
-        // Security Requirement definition
-        // Every single request of Swagger UI needs JWT authentication
-        // Need to input only token values when you authorise
         SecurityRequirement securityRequirement = new SecurityRequirement()
                 .addList("JWT");
 
