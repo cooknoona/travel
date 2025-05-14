@@ -1,8 +1,13 @@
 package com.travel.exception;
 
+import com.travel.exception.client.LockedException;
+import com.travel.exception.client.MethodNotAllowedException;
+import com.travel.exception.client.UnprocessableEntityException;
+import com.travel.exception.server.BadGatewayException;
+import com.travel.exception.server.InternalServerErrorException;
+import com.travel.exception.server.ServiceUnavailableException;
 import jakarta.persistence.EntityNotFoundException;
 import org.apache.coyote.BadRequestException;
-import org.apache.logging.log4j.util.InternalException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +72,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleMethodNotAllowedException(MethodNotAllowedException e) {
+        List<String> errorMessages = new ArrayList<>();
+        errorMessages.add(e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(405, "Method Not Allowed", errorMessages);
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
+    }
+
+    @ExceptionHandler
     public ResponseEntity<ErrorResponse> handleConflictException(DuplicateKeyException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -75,10 +88,42 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorResponse> handleInternalServerErrorException(InternalException e) {
+    public ResponseEntity<ErrorResponse> handleUnprocessableEntityException(UnprocessableEntityException e) {
+        List<String> errorMessages = new ArrayList<>();
+        errorMessages.add(e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(422, "Unprocessable Entity", errorMessages);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorResponse);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleLockedException(LockedException e) {
+        List<String> errorMessages = new ArrayList<>();
+        errorMessages.add(e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(423, "Locked", errorMessages);
+        return ResponseEntity.status(HttpStatus.LOCKED).body(errorResponse);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleInternalServerErrorException(InternalServerErrorException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(500, "Internal Server Error", errorMessages);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleBadGatewayException(BadGatewayException e) {
+        List<String> errorMessages = new ArrayList<>();
+        errorMessages.add(e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(502, "Bad Gateway", errorMessages);
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleServiceUnavailableException(ServiceUnavailableException e) {
+        List<String> errorMessages = new ArrayList<>();
+        errorMessages.add(e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(503, "Service Unavailable", errorMessages);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(errorResponse);
     }
 }

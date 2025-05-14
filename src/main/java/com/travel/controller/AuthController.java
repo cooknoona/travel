@@ -9,6 +9,7 @@ import com.travel.exception.client.UnauthenticatedException;
 import com.travel.service.AuthService;
 import com.travel.utility.CustomUserDetails;
 import com.travel.utility.JwtUtility;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,8 +31,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
-        LoginResponse tokens = authService.login(request, response);
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+        LoginResponse tokens = authService.login(request, servletRequest ,servletResponse);
         return ResponseEntity.ok(tokens);
     }
 

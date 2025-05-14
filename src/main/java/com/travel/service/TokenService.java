@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 
-/** To save Refresh Tokens in Redis, Also check blacklist and delete refresh token when users logout */
+/** To save Refresh Tokens into Redis, Also check blacklist and delete refresh token when users logout */
 @Service
 @RequiredArgsConstructor
 public class TokenService {
@@ -26,7 +26,7 @@ public class TokenService {
     }
 
     public boolean hasValidRefreshToken(Long userId, String refreshToken) {
-        String stored = (String) redisTemplate.opsForValue().get(REFRESH_PREFIX + userId);
+        String stored = redisTemplate.opsForValue().get(REFRESH_PREFIX + userId);
         return refreshToken.equals(stored);
     }
 

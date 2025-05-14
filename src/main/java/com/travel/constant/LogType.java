@@ -5,6 +5,5 @@ public enum LogType {
     UNREGISTER,
     LOGIN,
     LOGOUT,
-    ACTION,
-    ERROR
+    ACTION
 }

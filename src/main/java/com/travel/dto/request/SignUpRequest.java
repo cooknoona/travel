@@ -22,15 +22,19 @@ public record SignUpRequest(
         String password,
 
         @NotBlank(message = "First name is required")
-        @Size(max = 50, message = "First name must be 50 characters or fewer")
+        @Size(max = 20, message = "First name must be 20 characters or fewer")
         String firstName,
 
-        @Size(max = 50, message = "Middle name must be 50 characters or fewer")
+        @Size(max = 20, message = "Middle name must be 20 characters or fewer")
         String middleName,
 
         @NotBlank(message = "Last name is required")
-        @Size(max = 50, message = "Last name must be 50 characters or fewer")
+        @Size(max = 20, message = "Last name must be 20 characters or fewer")
         String lastName,
+
+        @NotBlank(message = "Nickname is required")
+        @Size(max = 20, message = "Nickname must be 20 characters or fewer")
+        String nickname,
 
         @NotNull(message = "Gender is required")
         Gender gender,
@@ -58,6 +62,7 @@ public record SignUpRequest(
                 .firstName(firstName)
                 .middleName(middleName)
                 .lastName(lastName)
+                .nickName(nickname)
                 .gender(gender)
                 .email(email)
                 .phone(phone)
