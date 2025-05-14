@@ -48,7 +48,7 @@ public class JwtUtility {
 
         return Jwts.builder()
                 .subject(String.valueOf(userDetails.id()))
-                .claim("name", userDetails.firstName())
+                .claim("name", userDetails.nickname())
                 .claim("authorities", userDetails.authorities())
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + ACCESS_TOKEN_EXPIRATION))

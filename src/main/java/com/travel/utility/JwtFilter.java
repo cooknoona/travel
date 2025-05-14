@@ -1,6 +1,7 @@
 package com.travel.utility;
 
-
+import com.travel.exception.security.JwtAuthenticationEntryPoint;
+import com.travel.exception.client.AuthenticationException;
 import com.travel.exception.client.BadRequestException;
 import com.travel.exception.client.UnauthenticatedException;
 import com.travel.service.TokenService;
@@ -23,6 +24,7 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtility jwtUtility;
     private final TokenService tokenService;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Override
     protected void doFilterInternal(@Nullable HttpServletRequest request,
@@ -39,8 +41,7 @@ public class JwtFilter extends OncePerRequestFilter {
             }
             filterChain.doFilter(request, response);
         } catch (UnauthenticatedException e) {
-            log.error("JWT validation failed: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            jwtAuthenticationEntryPoint.commence(request, response, new AuthenticationException(e.getMessage()));
         }
     }
 

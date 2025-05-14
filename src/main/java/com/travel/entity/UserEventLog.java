@@ -1,5 +1,6 @@
 package com.travel.entity;
 
+import com.travel.constant.LogDetail;
 import com.travel.constant.LogStatus;
 import com.travel.constant.LogType;
 import jakarta.persistence.*;
@@ -31,6 +32,9 @@ public class UserEventLog {
 
     @Enumerated(value = EnumType.STRING)
     private LogStatus logStatus;
+
+    @Enumerated(value = EnumType.STRING)
+    private LogDetail logDetail;
 
     @Column(nullable = false)
     private String ipAddress;

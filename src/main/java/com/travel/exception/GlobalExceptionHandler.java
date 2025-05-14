@@ -1,13 +1,10 @@
 package com.travel.exception;
 
-import com.travel.exception.client.LockedException;
-import com.travel.exception.client.MethodNotAllowedException;
-import com.travel.exception.client.UnprocessableEntityException;
+import com.travel.exception.client.*;
 import com.travel.exception.server.BadGatewayException;
 import com.travel.exception.server.InternalServerErrorException;
 import com.travel.exception.server.ServiceUnavailableException;
 import jakarta.persistence.EntityNotFoundException;
-import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +15,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import javax.naming.AuthenticationException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Global Exception Handler is in order to catch various exceptions. It'll throw exceptions
- * once implementations fail, and also it will give a user error response via error response */
+ * Global Exception Handler is in order to catch various exceptions. It'll throw exceptions in Service layer.
+ * Once implementations fail, and also it will give a user error response via error response */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -48,7 +44,15 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorResponse> handleUnauthorisedException(AuthenticationException e) {
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException e) {
+        List<String> errorMessages = new ArrayList<>();
+        errorMessages.add(e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(401, "Bad Credentials", errorMessages);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> handleUnauthorisedException(UnauthenticatedException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(401, "Unauthorized", errorMessages);

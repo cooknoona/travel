@@ -1,10 +1,10 @@
 package com.travel.service;
 
+import com.travel.constant.LogDetail;
 import com.travel.constant.LogStatus;
 import com.travel.constant.LogType;
 import com.travel.dto.request.LoginRequest;
 import com.travel.dto.request.SignUpRequest;
-import com.travel.dto.request.UserEventLogRequest;
 import com.travel.dto.response.LoginResponse;
 import com.travel.dto.response.TokenResponse;
 import com.travel.entity.User;
@@ -20,13 +20,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -49,13 +49,16 @@ public class AuthService {
     public LoginResponse login(LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
         String ipAddress = servletRequest.getRemoteAddr();
 
-        if (ipBlockService.isBlocked(ipAddress)) {
-            handleBlockedIp(ipAddress);
+        // 차단 여부 확인
+        LogDetail blockReason = ipBlockService.getBlockReason(ipAddress);
+        if (blockReason != LogDetail.NONE) {
+            handleBlockedIp(ipAddress, blockReason);
         }
 
+        // 유저 존재 여부 확인
         boolean userExists = userRepository.existsByUserId(request.userId());
         if (!userExists) {
-            handleNonexistentUser(request.userId(), ipAddress);
+            handleNonexistentUser(ipAddress);
         }
 
         try {
@@ -65,23 +68,25 @@ public class AuthService {
 
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             return handleLoginSuccess(userDetails, ipAddress, servletResponse);
-        } catch (BadCredentialsException | UnauthenticatedException e) {
+
+        } catch (BadCredentialsException e) {
             handleLoginFailure(ipAddress);
-            throw e instanceof BadCredentialsException
-                    ? new UnauthenticatedException("Invalid credentials")
-                    : e;
+            throw new UnauthenticatedException("Invalid credentials provided!");
+        } catch (AuthenticationException e) {
+            handleLoginFailure(ipAddress);
+            throw new UnauthenticatedException("User is not authenticated!");
         }
     }
 
-    private void handleBlockedIp(String ipAddress) {
+    private void handleBlockedIp(String ipAddress, LogDetail logDetail) {
         eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.BLOCKED);
-        throw new LockedException("Too many failed login attempts. Try again later!");
+        throw new LockedException("Login blocked due to: " + logDetail.name());
     }
 
-    private void handleNonexistentUser(String userId, String ipAddress) {
+    private void handleNonexistentUser(String ipAddress) {
         ipBlockService.increaseLoginFailWithoutUserIdCount(ipAddress);
 
-        if (ipBlockService.isBlockedDueToNonexistentUsers(ipAddress)) {
+        if (ipBlockService.getBlockReason(ipAddress) == LogDetail.NON_EXISTENT_USER_ATTEMPTS) {
             ipBlockService.blockIp(ipAddress);
             eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.BLOCKED);
             throw new LockedException("Too many login attempts with invalid user IDs. Try again later!");
@@ -110,7 +115,7 @@ public class AuthService {
         eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.FAILED);
     }
 
-    public TokenResponse reissue(String refreshToken) {
+    public TokenResponse accessTokenReissue(String refreshToken) {
         jwtUtility.validateToken(refreshToken);
         Claims claims = jwtUtility.parseToken(refreshToken);
         Long userId = Long.valueOf(claims.getSubject());

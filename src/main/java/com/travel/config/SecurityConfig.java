@@ -1,7 +1,7 @@
 package com.travel.config;
 
-import com.travel.exception.JwtAccessDeniedHandler;
-import com.travel.exception.JwtAuthenticationEntryPoint;
+import com.travel.exception.security.JwtAccessDeniedHandler;
+import com.travel.exception.security.JwtAuthenticationEntryPoint;
 import com.travel.service.TokenService;
 import com.travel.utility.JwtFilter;
 import com.travel.utility.JwtUtility;
@@ -40,21 +40,20 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui/index.html",
                                 "/auth/**",
                                 "/callback/**",
                                 "/index.html",
-                                "/robots.txt",
                                 "/fonts/**",
                                 "/images/**",
                                 "/static/**"
                         ).permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                        .accessDeniedHandler(jwtAccessDeniedHandler)) // 예외 처리
-                .addFilterBefore(new JwtFilter(jwtUtility, tokenService), UsernamePasswordAuthenticationFilter.class); // JWT 필터
+                        .accessDeniedHandler(jwtAccessDeniedHandler))
+                .addFilterBefore(new JwtFilter(jwtUtility, tokenService, jwtAuthenticationEntryPoint), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

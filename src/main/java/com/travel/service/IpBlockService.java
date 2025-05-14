@@ -1,5 +1,6 @@
 package com.travel.service;
 
+import com.travel.constant.LogDetail;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
@@ -12,6 +13,7 @@ import java.time.Duration;
 @Service
 @RequiredArgsConstructor
 public class IpBlockService {
+
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String LOGIN_FAIL_PREFIX = "login:fail:";
@@ -20,15 +22,14 @@ public class IpBlockService {
     private static final long BLOCK_DURATION_MINUTES = 10;
 
     public void increaseLoginFailCount(String ipAddress) {
-        increaseFailCount(LOGIN_FAIL_PREFIX, ipAddress, BLOCK_DURATION_MINUTES);
+        increaseFailCount(LOGIN_FAIL_PREFIX + ipAddress, BLOCK_DURATION_MINUTES);
     }
 
     public void increaseLoginFailWithoutUserIdCount(String ipAddress) {
-        increaseFailCount(LOGIN_FAIL_WITHOUT_ID_PREFIX, ipAddress, 1);
+        increaseFailCount(LOGIN_FAIL_WITHOUT_ID_PREFIX + ipAddress, 1);
     }
 
-    private void increaseFailCount(String prefix, String ipAddress, long durationMinutes) {
-        String key = prefix + ipAddress;
+    private void increaseFailCount(String key, long durationMinutes) {
         ValueOperations<String, String> ops = redisTemplate.opsForValue();
         if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
             ops.increment(key);
@@ -37,30 +38,23 @@ public class IpBlockService {
         }
     }
 
-    public Boolean isBlockedDueToTooManyAttempts(String ipAddress) {
-        return isBlocked(LOGIN_FAIL_PREFIX, ipAddress);
-    }
-
-    public Boolean isBlockedDueToNonexistentUsers(String ipAddress) {
-        return isBlocked(LOGIN_FAIL_WITHOUT_ID_PREFIX, ipAddress);
-    }
-
-    private boolean isBlocked(String prefix, String ipAddress) {
-        String value = redisTemplate.opsForValue().get(prefix + ipAddress);
+    private boolean isBlockedByKey(String key) {
+        String value = redisTemplate.opsForValue().get(key);
         return value != null && Integer.parseInt(value) >= MAX_LOGIN_ATTEMPTS;
     }
 
-    public Boolean isBlocked(String ipAddress) {
-        return isBlockedDueToTooManyAttempts(ipAddress) || isBlockedDueToNonexistentUsers(ipAddress);
+    public LogDetail getBlockReason(String ipAddress) {
+        boolean tooManyAttempts = isBlockedByKey(LOGIN_FAIL_PREFIX + ipAddress);
+        boolean invalidUserAttempts = isBlockedByKey(LOGIN_FAIL_WITHOUT_ID_PREFIX + ipAddress);
+
+        if (tooManyAttempts) return LogDetail.TOO_MANY_ATTEMPTS;
+        if (invalidUserAttempts) return LogDetail.NON_EXISTENT_USER_ATTEMPTS;
+        return LogDetail.NONE;
     }
 
     public void blockIp(String ipAddress) {
-        String ipFailKey = LOGIN_FAIL_PREFIX + ipAddress;
-        String ipWithoutIdKey = LOGIN_FAIL_WITHOUT_ID_PREFIX + ipAddress;
-
-        // 차단 토큰을 두 키 모두에 설정
-        redisTemplate.opsForValue().set(ipFailKey, String.valueOf(MAX_LOGIN_ATTEMPTS), Duration.ofMinutes(BLOCK_DURATION_MINUTES));
-        redisTemplate.opsForValue().set(ipWithoutIdKey, String.valueOf(MAX_LOGIN_ATTEMPTS), Duration.ofMinutes(BLOCK_DURATION_MINUTES));
+        redisTemplate.opsForValue().set(LOGIN_FAIL_PREFIX + ipAddress, String.valueOf(MAX_LOGIN_ATTEMPTS), Duration.ofMinutes(BLOCK_DURATION_MINUTES));
+        redisTemplate.opsForValue().set(LOGIN_FAIL_WITHOUT_ID_PREFIX + ipAddress, String.valueOf(MAX_LOGIN_ATTEMPTS), Duration.ofMinutes(BLOCK_DURATION_MINUTES));
     }
 
     public void resetLoginFailCount(String ipAddress) {
@@ -68,3 +62,4 @@ public class IpBlockService {
         redisTemplate.delete(LOGIN_FAIL_WITHOUT_ID_PREFIX + ipAddress);
     }
 }
+
