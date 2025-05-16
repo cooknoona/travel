@@ -1,6 +1,6 @@
 package com.travel.utility;
 
-import com.travel.exception.client.ForbiddenException;
+import com.travel.exception.client.AccessDeniedException;
 import com.travel.exception.client.UnauthenticatedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -54,7 +54,7 @@ public class SecurityUtility {
 
             if (!isAdmin) {
                 log.info("[SecurityUtil.isAdminUserOrThrow] No authority to access.");
-                throw new ForbiddenException("No Authority to access");
+                throw new AccessDeniedException("No Authority to access");
             }
 
             return id;

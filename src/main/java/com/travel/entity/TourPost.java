@@ -5,11 +5,14 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 /** Entity for a post, only guides have an authority to post it */
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "guide_tour")
 @Getter @Setter
 @NoArgsConstructor
@@ -33,6 +36,10 @@ public class TourPost {
 
     @Enumerated(EnumType.STRING)
     private PostStatus postStatus;
+
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime postedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "guide_id")

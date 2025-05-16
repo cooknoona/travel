@@ -5,11 +5,14 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 /** Tour reservation is given after a request from a user and when a guide accepts it */
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "tour_reservation")
 @Getter
 @Setter
@@ -20,7 +23,8 @@ public class TourReservation {
     @Column(name="id")
     private Long id;
 
-    @Column(name = "reserved_at", nullable = false, updatable = false)
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime reservedAt;
 
     @Enumerated(EnumType.STRING)

@@ -19,9 +19,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthService {
     private final AuthenticationManager authenticationManager;
@@ -49,37 +50,37 @@ public class AuthService {
     public LoginResponse login(LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
         String ipAddress = servletRequest.getRemoteAddr();
 
-        // 차단 여부 확인
         LogDetail blockReason = ipBlockService.getBlockReason(ipAddress);
         if (blockReason != LogDetail.NONE) {
             handleBlockedIp(ipAddress, blockReason);
         }
 
-        // 유저 존재 여부 확인
         boolean userExists = userRepository.existsByUserId(request.userId());
         if (!userExists) {
             handleNonexistentUser(ipAddress);
         }
 
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.userId(), request.password())
-            );
+            Authentication authentication = authenticationManager.authenticate(request.toAuthentication());
 
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             return handleLoginSuccess(userDetails, ipAddress, servletResponse);
 
         } catch (BadCredentialsException e) {
             handleLoginFailure(ipAddress);
+            log.error("Invalid credentials, check userId and/or password : ", e);
             throw new UnauthenticatedException("Invalid credentials provided!");
         } catch (AuthenticationException e) {
             handleLoginFailure(ipAddress);
+            log.error("Invalid authentication, check access token : ", e);
             throw new UnauthenticatedException("User is not authenticated!");
         }
     }
 
+    /** Helper method when blocked IP with existent userId logged in */
     private void handleBlockedIp(String ipAddress, LogDetail logDetail) {
         eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.BLOCKED);
+        log.error("Blocked IP : {}, with existent userid accessed, and reason : {}", ipAddress, logDetail.name());
         throw new LockedException("Login blocked due to: " + logDetail.name());
     }
 
@@ -89,10 +90,12 @@ public class AuthService {
         if (ipBlockService.getBlockReason(ipAddress) == LogDetail.NON_EXISTENT_USER_ATTEMPTS) {
             ipBlockService.blockIp(ipAddress);
             eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.BLOCKED);
-            throw new LockedException("Too many login attempts with invalid user IDs. Try again later!");
+            log.error("Blocked IP : {}, with none existent userid accessed, and reason : {}", ipAddress, ipBlockService.getBlockReason(ipAddress));
+            throw new LockedException("Too many login attempts with invalid userid, try again later!");
         }
 
         eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.FAILED);
+        log.warn("Accessed IP : {}, with none existent userid has failed to login!", ipAddress);
         throw new ResourceNotFoundException("User not found");
     }
 
@@ -107,6 +110,7 @@ public class AuthService {
         String accessToken = jwtUtility.generateAccessToken(userDetails);
 
         eventTrackingService.loginEventCollector(userPk, ipAddress, LogType.LOGIN, LogStatus.SUCCEEDED);
+        log.info("PK: {}'s login has been successful with IP: {}", userPk, ipAddress);
         return LoginResponse.ofAccessTokenAndUserInfo(accessToken, userPk, nickname);
     }
 

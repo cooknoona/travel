@@ -8,11 +8,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 /** For user event log checking, Not necessary to have any relation with other entities */
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "user_event_log")
 @Getter
 @NoArgsConstructor
@@ -39,6 +42,7 @@ public class UserEventLog {
     @Column(nullable = false)
     private String ipAddress;
 
-    @Column(nullable = false)
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime timestamp;
 }

@@ -6,7 +6,11 @@ import com.travel.constant.Language;
 import com.travel.constant.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,12 +19,13 @@ import java.util.Set;
 
 /** User entity to have a set of basic information of users */
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "user")
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,7 +54,7 @@ public class User {
     private Gender gender;
 
     @Column(nullable = false, updatable = false)
-    private LocalDateTime birthDate;
+    private LocalDate birthDate;
 
     @Column(nullable = false, unique = true, length = 50)
     private String email;
@@ -60,6 +65,7 @@ public class User {
     private String imgUrl;
     private String feed;
 
+    @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime registeredAt;
 
@@ -69,30 +75,38 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Authority authority;
 
+    @Builder.Default
     @ElementCollection(targetClass = Language.class)
     @Enumerated(EnumType.STRING)
     @CollectionTable(name = "user_languages", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "language")
     private Set<Language> languages = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<TourRequest> tourRequests = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<TourReservation> tourReservations = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
     private List<GuideFeedback> guideFeedbacks = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "requester", cascade = CascadeType.REMOVE)
     private List<FriendRequest> friendRequesters = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "receiver", cascade = CascadeType.REMOVE)
     private List<FriendRequest> friendReceivers = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "requester", cascade = CascadeType.REMOVE)
     private List<Friend> friendInitiators = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "receiver", cascade = CascadeType.REMOVE)
     private List<Friend> friendAcceptors = new ArrayList<>();
 }

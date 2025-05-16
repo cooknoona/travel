@@ -23,10 +23,10 @@ public class Certificate {
     @Column(nullable = false)
     private String imgUrl;
 
-    @Column(name = "issued_date", nullable = false)
+    @Column(nullable = false)
     private LocalDateTime issuedDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
+    @JoinColumn(name = "guide_id")
     private Guide guide;
 }

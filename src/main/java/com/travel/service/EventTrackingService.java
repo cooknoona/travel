@@ -8,6 +8,7 @@ import com.travel.repository.UserEventLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/** To collect important events into DB */
 @Service
 @RequiredArgsConstructor
 public class EventTrackingService {

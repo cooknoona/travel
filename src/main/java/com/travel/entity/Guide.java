@@ -3,9 +3,8 @@ package com.travel.entity;
 import com.travel.constant.GuideStatus;
 import com.travel.constant.Level;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +14,8 @@ import java.util.List;
 @Table(name = "guide")
 @Getter @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
 public class Guide extends User {
     @Enumerated(EnumType.STRING)
     private Level level;
@@ -22,18 +23,23 @@ public class Guide extends User {
     @Enumerated(EnumType.STRING)
     private GuideStatus guideStatus;
 
+    @Builder.Default
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
     private List<TourPost> tourPosts = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
     private List<TourRequest> tourRequests = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
     private List<TourReservation> tourReservations = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
     private List<GuideFeedback> guideFeedbacks = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
     private List<Certificate> certificates = new ArrayList<>();
 }

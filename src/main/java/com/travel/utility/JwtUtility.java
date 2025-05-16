@@ -48,7 +48,7 @@ public class JwtUtility {
 
         return Jwts.builder()
                 .subject(String.valueOf(userDetails.id()))
-                .claim("name", userDetails.nickname())
+                .claim("nickname", userDetails.nickname())
                 .claim("authorities", userDetails.authorities())
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + ACCESS_TOKEN_EXPIRATION))
@@ -79,7 +79,7 @@ public class JwtUtility {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         CustomUserDetails userDetails = new CustomUserDetails(
-                user.getId(), user.getUserId(), user.getFirstName(),
+                user.getId(), user.getUserId(), user.getNickName(),
                 user.getPassword(),
                 Collections.singleton(new SimpleGrantedAuthority(user.getAuthority().toString()))
         );
@@ -89,7 +89,7 @@ public class JwtUtility {
 
         String newAccessToken = Jwts.builder()
                 .subject(String.valueOf(user.getId()))
-                .claim("name", user.getFirstName())
+                .claim("name", user.getNickName())
                 .claim("authorities", userDetails.authorities())
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + ACCESS_TOKEN_EXPIRATION))

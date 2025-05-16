@@ -5,12 +5,15 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
 /** Requested tour entity, guide can decide whether accept tour or reject
  *  Otherwise, the ticket will be on pending */
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "tour_request")
 @Getter
 @Setter
@@ -21,7 +24,8 @@ public class TourRequest {
     @Column(name="id")
     private Long id;
 
-    @Column(name = "requested_at", nullable = false, updatable = false)
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime requestedAt;
 
     @Enumerated(EnumType.STRING)

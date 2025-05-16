@@ -7,7 +7,7 @@ import com.travel.entity.User;
 import jakarta.validation.constraints.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public record SignUpRequest(
         @NotBlank(message = "ID is required")
@@ -41,7 +41,7 @@ public record SignUpRequest(
 
         @NotNull(message = "Birth date is required")
         @Past(message = "Birth date must be in the past")
-        LocalDateTime birthDate,
+        LocalDate birthDate,
 
         @NotBlank(message = "Email is required")
         @Email(message = "Invalid email format") @Size(max = 100,

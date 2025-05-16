@@ -2,25 +2,22 @@ package com.travel.exception;
 
 import com.travel.exception.client.*;
 import com.travel.exception.server.BadGatewayException;
-import com.travel.exception.server.InternalServerErrorException;
 import com.travel.exception.server.ServiceUnavailableException;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Global Exception Handler is in order to catch various exceptions. It'll throw exceptions in Service layer.
- * Once implementations fail, and also it will give a user error response via error response */
+ * Global Exception Handler is in order to catch various exceptions. It'll throw exceptions in Service layer or Business layer.
+ * Once implementations fail, and also it will give a user error response via error response
+ * However, the MethodArgumentNotValidException is Internal logic exception, In controller layer due to @Valid will catch this error
+ * and throw this instead. Basically the way I implemented custom exception classed are for business logic */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -35,7 +32,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -43,7 +40,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -51,7 +48,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(UnauthenticatedException.class)
     public ResponseEntity<ErrorResponse> handleUnauthorisedException(UnauthenticatedException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -59,7 +56,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(com.travel.exception.client.AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -67,15 +64,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
-    @ExceptionHandler({EntityNotFoundException.class, NoResourceFoundException.class})
-    public ResponseEntity<ErrorResponse> handleNotFoundExceptions(RuntimeException e) {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundExceptions(ResourceNotFoundException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(404, "Not Found", errorMessages);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(MethodNotAllowedException.class)
     public ResponseEntity<ErrorResponse> handleMethodNotAllowedException(MethodNotAllowedException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -83,15 +80,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
     }
 
-    @ExceptionHandler
-    public ResponseEntity<ErrorResponse> handleConflictException(DuplicateKeyException e) {
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(ConflictException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(409, "Conflict", errorMessages);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(UnprocessableEntityException.class)
     public ResponseEntity<ErrorResponse> handleUnprocessableEntityException(UnprocessableEntityException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -99,7 +96,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorResponse);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(LockedException.class)
     public ResponseEntity<ErrorResponse> handleLockedException(LockedException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -107,15 +104,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.LOCKED).body(errorResponse);
     }
 
-    @ExceptionHandler
-    public ResponseEntity<ErrorResponse> handleInternalServerErrorException(InternalServerErrorException e) {
+    /** If an exception is not handled and propagates up to the top level, Spring will automatically respond with a 500 Internal Server Error.
+     *  This GlobalExceptionHandler will catch Exception which is the top level of exception */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleInternalServerErrorException(Exception e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(500, "Internal Server Error", errorMessages);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
-    @ExceptionHandler
+    /** External API call exceptions, So these two 502 and 503 are refer custom exception class */
+    @ExceptionHandler(BadGatewayException.class)
     public ResponseEntity<ErrorResponse> handleBadGatewayException(BadGatewayException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
@@ -123,7 +123,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(errorResponse);
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(ServiceUnavailableException.class)
     public ResponseEntity<ErrorResponse> handleServiceUnavailableException(ServiceUnavailableException e) {
         List<String> errorMessages = new ArrayList<>();
         errorMessages.add(e.getMessage());
