@@ -68,11 +68,11 @@ public class AuthService {
 
         } catch (BadCredentialsException e) {
             handleLoginFailure(ipAddress);
-            log.error("Invalid credentials, check userId and/or password : ", e);
+            log.error("Invalid credentials, check userId and/or password");
             throw new UnauthenticatedException("Invalid credentials provided!");
         } catch (AuthenticationException e) {
             handleLoginFailure(ipAddress);
-            log.error("Invalid authentication, check access token : ", e);
+            log.error("Invalid authentication, check access token");
             throw new UnauthenticatedException("User is not authenticated!");
         }
     }
