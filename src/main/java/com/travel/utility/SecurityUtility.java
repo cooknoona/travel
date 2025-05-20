@@ -2,12 +2,13 @@ package com.travel.utility;
 
 import com.travel.exception.client.AccessDeniedException;
 import com.travel.exception.client.UnauthenticatedException;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-@Slf4j
+@Log4j2
 public class SecurityUtility {
     public static Long getIdOrThrow() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

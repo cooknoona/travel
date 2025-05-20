@@ -1,7 +1,6 @@
 package com.travel.utility;
 
-import com.travel.config.JwtConfig;
-import com.travel.dto.response.LoginResponse;
+import com.travel.config.WebConfig;
 import com.travel.dto.response.TokenResponse;
 import com.travel.entity.User;
 import com.travel.exception.client.ResourceNotFoundException;
@@ -11,7 +10,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,7 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-@Slf4j
+@Log4j2
 @Component
 public class JwtUtility {
     private final String secretKey;
@@ -37,8 +36,8 @@ public class JwtUtility {
 
     private final UserRepository userRepository;
 
-    public JwtUtility(JwtConfig jwtConfig, UserRepository userRepository) {
-        this.secretKey = jwtConfig.getSecretKey();
+    public JwtUtility(WebConfig webConfig, UserRepository userRepository) {
+        this.secretKey = webConfig.getSecretKey();
         this.userRepository = userRepository;
     }
 
@@ -48,6 +47,7 @@ public class JwtUtility {
 
         return Jwts.builder()
                 .subject(String.valueOf(userDetails.id()))
+                .claim("userId", userDetails.userId())
                 .claim("nickname", userDetails.nickname())
                 .claim("authorities", userDetails.authorities())
                 .issuedAt(new Date(now))
@@ -73,9 +73,9 @@ public class JwtUtility {
 
     public TokenResponse reIssueAccessToken(String refreshToken) {
         Claims claims = parseToken(refreshToken);
-        String userId = claims.getSubject();
+        String id = claims.getSubject();
 
-        User user = userRepository.findById(Long.valueOf(userId))
+        User user = userRepository.findById(Long.valueOf(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         CustomUserDetails userDetails = new CustomUserDetails(
@@ -89,7 +89,8 @@ public class JwtUtility {
 
         String newAccessToken = Jwts.builder()
                 .subject(String.valueOf(user.getId()))
-                .claim("name", user.getNickName())
+                .claim("userId", userDetails.userId())
+                .claim("nickname", user.getNickName())
                 .claim("authorities", userDetails.authorities())
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + ACCESS_TOKEN_EXPIRATION))
@@ -100,7 +101,7 @@ public class JwtUtility {
     }
 
     public Claims parseToken(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
