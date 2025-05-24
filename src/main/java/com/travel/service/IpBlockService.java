@@ -17,7 +17,7 @@ public class IpBlockService {
     private final RedisTemplate<String, String> redisTemplate;
 
     private static final String LOGIN_FAIL_PREFIX = "login:fail:";
-    private static final String LOGIN_FAIL_WITHOUT_ID_PREFIX = "login:without:id:";
+    private static final String LOGIN_FAIL_WITHOUT_ID_PREFIX = "login:fail:without:id:";
     private static final int MAX_LOGIN_ATTEMPTS = 5;
     private static final long BLOCK_DURATION_MINUTES = 10;
 

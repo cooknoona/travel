@@ -52,7 +52,7 @@ public class AuthService {
 
         LogDetail blockReason = ipBlockService.getBlockReason(ipAddress);
         if (blockReason != LogDetail.NONE) {
-            handleBlockedIp(ipAddress, blockReason);
+            handleCatchBlockedIp(ipAddress, blockReason);
         }
 
         boolean userExists = userRepository.existsByUserId(request.userId());
@@ -68,22 +68,23 @@ public class AuthService {
 
         } catch (BadCredentialsException e) {
             handleLoginFailure(ipAddress);
-            log.error("Invalid credentials, check userId and/or password");
+            log.error("Invalid credentials, given password is wrong");
             throw new UnauthenticatedException("Invalid credentials provided!");
         } catch (AuthenticationException e) {
             handleLoginFailure(ipAddress);
-            log.error("Invalid authentication, check access token");
+            log.error("Invalid authentication, given token is not valid");
             throw new UnauthenticatedException("User is not authenticated!");
         }
     }
 
-    /** Helper method when blocked IP with existent userId logged in */
-    private void handleBlockedIp(String ipAddress, LogDetail logDetail) {
+    /** Helper method for login to investigate how the user got blocked to log-in */
+    private void handleCatchBlockedIp(String ipAddress, LogDetail logDetail) {
         eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.BLOCKED);
-        log.error("Blocked IP : {}, with existent userid accessed, and reason : {}", ipAddress, logDetail.name());
+        log.error("Blocked IP : {} login detected with reason : {}", ipAddress, logDetail.name());
         throw new LockedException("Login blocked due to: " + logDetail.name());
     }
 
+    /** Helper method for login when none existent userid tries to access, and it's counting with findBy method query */
     private void handleNonexistentUser(String ipAddress) {
         ipBlockService.increaseLoginFailWithoutUserIdCount(ipAddress);
 
@@ -99,6 +100,8 @@ public class AuthService {
         throw new ResourceNotFoundException("User not found");
     }
 
+    /** Helper method for login when login has been successful and collect an event and log.
+     *  Also, return access token and refresh token in http body and cookie each */
     private LoginResponse handleLoginSuccess(CustomUserDetails userDetails, String ipAddress, HttpServletResponse response) {
         Long userPk = userDetails.id();
         String nickname = userDetails.nickname();
@@ -114,6 +117,7 @@ public class AuthService {
         return LoginResponse.ofAccessTokenAndUserInfo(accessToken, userPk, nickname);
     }
 
+    /** Helper method for login when login process simply fails with wrong password and token */
     private void handleLoginFailure(String ipAddress) {
         ipBlockService.increaseLoginFailCount(ipAddress);
         eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.FAILED);
