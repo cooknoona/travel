@@ -1,6 +1,5 @@
 package com.travel.dto.request;
 
-import com.travel.constant.LogStatus;
 import com.travel.constant.LogType;
 import com.travel.entity.UserEventLog;
 
@@ -10,11 +9,10 @@ public record UserEventLogRequest(
         Long userPk,
         String ipAddress
 ) {
-    public UserEventLog toEntity(LogType type, LogStatus status) {
+    public UserEventLog toEntity(LogType type) {
         return UserEventLog.builder()
                 .userPk(userPk)
                 .logType(type)
-                .logStatus(status)
                 .ipAddress(ipAddress)
                 .timestamp(LocalDateTime.now())
                 .build();

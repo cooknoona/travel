@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 /** Entity for a post, only guides have an authority to post it */
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "guide_tour")
+@Table(name = "tour_post")
 @Getter @Setter
 @NoArgsConstructor
 public class TourPost {

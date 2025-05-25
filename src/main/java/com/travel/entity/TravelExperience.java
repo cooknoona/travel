@@ -5,9 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Tour community,  */
+/** A Tour community entity that users can share their experiences */
 @Entity
-@Table(name = "travel_community")
+@Table(name = "travel_experience")
 @Getter @Setter
 @NoArgsConstructor
 public class TravelExperience {

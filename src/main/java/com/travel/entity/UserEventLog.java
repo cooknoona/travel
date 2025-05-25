@@ -1,6 +1,5 @@
 package com.travel.entity;
 
-import com.travel.constant.LogStatus;
 import com.travel.constant.LogType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,7 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-/** For user event log checking, Not necessary to have any relation with other entities */
+/** For user event checking, Not necessary to have any relation with other entities */
 @Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "user_event_log")
@@ -25,15 +24,11 @@ public class UserEventLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** This will be replaced for user primary key, nullable = true */
-    @Column(unique = true, length = 20)
+    @Column(nullable = false, unique = true, length = 20)
     private Long userPk;
 
     @Enumerated(value = EnumType.STRING)
     private LogType logType;
-
-    @Enumerated(value = EnumType.STRING)
-    private LogStatus logStatus;
 
     @Column(nullable = false)
     private String ipAddress;

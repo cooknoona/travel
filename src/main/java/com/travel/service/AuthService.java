@@ -1,7 +1,6 @@
 package com.travel.service;
 
 import com.travel.constant.LogDetail;
-import com.travel.constant.LogStatus;
 import com.travel.constant.LogType;
 import com.travel.dto.request.LoginRequest;
 import com.travel.dto.request.SignUpRequest;
@@ -40,12 +39,16 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    /** Join method, Encoding with hash code but will need email verification later */
     public Boolean join(SignUpRequest signUpRequest) {
         User user = signUpRequest.toUserEntity(passwordEncoder);
         userRepository.save(user);
         return true;
     }
 
+    /** Login method, check accessibility of users to login first based on ip whether it's blocked or not.
+     *  Also to double-check if one user attempts to log in without none existed userid then it'll block but with different reason
+     *  inside try-catch, will verify with an authentication object and go through handleLoginSuccess to save user's event */
     @Transactional
     public LoginResponse login(LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
         String ipAddress = servletRequest.getRemoteAddr();
@@ -79,7 +82,6 @@ public class AuthService {
 
     /** Helper method for login to investigate how the user got blocked to log-in */
     private void handleCatchBlockedIp(String ipAddress, LogDetail logDetail) {
-        eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.BLOCKED);
         log.error("Blocked IP : {} login detected with reason : {}", ipAddress, logDetail.name());
         throw new LockedException("Login blocked due to: " + logDetail.name());
     }
@@ -90,12 +92,10 @@ public class AuthService {
 
         if (ipBlockService.getBlockReason(ipAddress) == LogDetail.NON_EXISTENT_USER_ATTEMPTS) {
             ipBlockService.blockIp(ipAddress);
-            eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.BLOCKED);
             log.error("Blocked IP : {}, with none existent userid accessed, and reason : {}", ipAddress, ipBlockService.getBlockReason(ipAddress));
             throw new LockedException("Too many login attempts with invalid userid, try again later!");
         }
 
-        eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.FAILED);
         log.warn("Accessed IP : {}, with none existent userid has failed to login!", ipAddress);
         throw new ResourceNotFoundException("User not found");
     }
@@ -112,7 +112,7 @@ public class AuthService {
         tokenService.saveRefreshToken(userPk, refreshToken);
         String accessToken = jwtUtility.generateAccessToken(userDetails);
 
-        eventTrackingService.loginEventCollector(userPk, ipAddress, LogType.LOGIN, LogStatus.SUCCEEDED);
+        eventTrackingService.loginEventCollector(userPk, ipAddress, LogType.LOGIN);
         log.info("PK: {}'s login has been successful with IP: {}", userPk, ipAddress);
         return LoginResponse.ofAccessTokenAndUserInfo(accessToken, userPk, nickname);
     }
@@ -120,9 +120,9 @@ public class AuthService {
     /** Helper method for login when login process simply fails with wrong password and token */
     private void handleLoginFailure(String ipAddress) {
         ipBlockService.increaseLoginFailCount(ipAddress);
-        eventTrackingService.loginEventCollector(null, ipAddress, LogType.LOGIN, LogStatus.FAILED);
     }
 
+    /** Re-issuing access token method with refresh tokens stores into cookie via HTTP headers */
     public TokenResponse accessTokenReissue(String refreshToken) {
         jwtUtility.validateToken(refreshToken);
         Claims claims = jwtUtility.parseToken(refreshToken);
@@ -136,13 +136,22 @@ public class AuthService {
         return TokenResponse.ofAccessToken(newAccessToken);
     }
 
+    /** Logout method, first check the user authentication if the user on now has same information with authentication object
+     *  In the token service, refresh tokens and AccessToken will store in blacklist */
     public void logout(String accessToken, HttpServletResponse response) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new UnauthenticatedException("Invalid authentication context");
+        }
+        try {
             tokenService.deleteRefreshToken(userDetails.id());
             tokenService.blacklistAccessToken(accessToken);
+            log.info("UserId : {} has logged out", userDetails.userId());
+        } catch (AuthenticationException e) {
+            log.error("Logout process failed", e);
+            throw new UnauthenticatedException("Logout failed");
+        } finally {
+            jwtUtility.clearRefreshTokenCookie(response);
         }
-
-        jwtUtility.clearRefreshTokenCookie(response);
     }
 }

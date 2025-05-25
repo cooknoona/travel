@@ -43,15 +43,17 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
-            throw new UnauthenticatedException("Invalid authentication context");
-        }
-
-        String accessToken = jwtUtility.generateAccessToken(userDetails);
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        String accessToken = extractAccessTokenFromHeader(request);
         authService.logout(accessToken, response);
-
         return ResponseEntity.noContent().build();
+    }
+
+    private String extractAccessTokenFromHeader(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7); // "Bearer " 이후 문자열 추출
+        }
+        throw new UnauthenticatedException("Access token is missing or invalid");
     }
 }
