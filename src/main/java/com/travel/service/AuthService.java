@@ -40,7 +40,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     /** Join method, Encoding with hash code but will need email verification later */
-    public Boolean join(SignUpRequest signUpRequest) {
+    public Boolean signUp(SignUpRequest signUpRequest) {
         User user = signUpRequest.toUserEntity(passwordEncoder);
         userRepository.save(user);
         return true;
@@ -148,7 +148,7 @@ public class AuthService {
             tokenService.blacklistAccessToken(accessToken);
             log.info("UserId : {} has logged out", userDetails.userId());
         } catch (AuthenticationException e) {
-            log.error("Logout process failed", e);
+            log.error("UserId : {} has failed logging out", userDetails.userId());
             throw new UnauthenticatedException("Logout failed");
         } finally {
             jwtUtility.clearRefreshTokenCookie(response);

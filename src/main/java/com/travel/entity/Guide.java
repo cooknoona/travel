@@ -25,7 +25,7 @@ public class Guide extends User {
 
     @Builder.Default
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)
-    private List<TourPost> tourPosts = new ArrayList<>();
+    private List<Tour> tours = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "guide", cascade = CascadeType.REMOVE)

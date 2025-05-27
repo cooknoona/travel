@@ -24,6 +24,12 @@ public class TourRequest {
     @Column(name="id")
     private Long id;
 
+    @Column(nullable = false)
+    private LocalDateTime startDate;
+
+    @Column(nullable = false)
+    private LocalDateTime endDate;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime requestedAt;
